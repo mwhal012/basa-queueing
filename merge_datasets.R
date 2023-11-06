@@ -81,7 +81,8 @@ data = data |>
 			Day_of_Week <= 5, # Monday is 1, Tuesday is 2 etc.
 			true = "1 - WEEKDAY",
 			false = "2 - WEEKEND"
-		)
+		),
+		.after = Day_of_Week
 	) |>
 	type_convert(
 		col_types = cols(
