@@ -71,7 +71,8 @@ rm(Pc)
 data = data |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
-		Period_of_Week = parse_number(Period_of_Week),
+		# not as useful to have as an integer
+		# Period_of_Week = parse_number(Period_of_Week),
 		Day_of_Week = parse_number(Day_of_Week),
 		Month = parse_number(Month),
 		Season = parse_number(Season)
