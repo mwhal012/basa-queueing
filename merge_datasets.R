@@ -69,7 +69,9 @@ data = data |>
 	bind_rows(Pc)
 rm(Pc)
 data = data |>
-	select(!Period_of_Week) |>
+	select(
+		!c(Period_of_Week, valid_P_ID:Sch_Act_Flag)
+	) |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
 		Day_of_Week = parse_number(Day_of_Week),
@@ -115,7 +117,11 @@ for (
 		as_datetime()
 }
 data = data |> # remove nonsensical S2 >= Act_Departure
-	filter(is.na(S2) | S2 <= Act_Departure)
+	filter(
+		is.na(S2) | S2 <= Act_Departure,
+		Airfield %in% c("AUC", "SAF"),
+		!is.na(C0) & C0 != 0
+	)
 
 data |>
 	write_csv(
