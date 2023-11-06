@@ -69,13 +69,19 @@ data = data |>
 	bind_rows(Pc)
 rm(Pc)
 data = data |>
+	select(!Period_of_Week) |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
-		# not as useful to have as an integer
-		# Period_of_Week = parse_number(Period_of_Week),
 		Day_of_Week = parse_number(Day_of_Week),
 		Month = parse_number(Month),
 		Season = parse_number(Season)
+	) |>
+	mutate(
+		Period_of_Week = if_else(
+			Day_of_Week <= 5, # Monday is 1, Tuesday is 2 etc.
+			true = "1 - WEEKDAY",
+			false = "2 - WEEKEND"
+		)
 	) |>
 	type_convert(
 		col_types = cols(
