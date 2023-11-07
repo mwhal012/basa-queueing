@@ -19,7 +19,9 @@ common_parse = function(x) {
 		)
 }
 
-# place leading zeroes on hours, minutes, seconds
+remove_seconds = function(x) str_remove(string = x, pattern = ":00$")
+
+# place leading zeroes on hours and minutes
 # if they are of length one
 leadzero = function(x) {
 	if_else(
@@ -37,7 +39,13 @@ data = "datasets/years20262030.csv" |>
 	bind_rows(
 		"datasets/BASA_AUC_2028_912.csv" |>
 			common_parse()
-	)
+	) |>
+  mutate(
+    S2 = remove_seconds(S2),
+    Sch_Departure = remove_seconds(Sch_Departure),
+    Act_Departure = remove_seconds(Act_Departure),
+    Departure_Time = remove_seconds(Departure_Time)
+  )
 Pc = "datasets/dat_P_sub_c.csv" |>
 	read_csv(
 		col_types = cols(
@@ -47,6 +55,11 @@ Pc = "datasets/dat_P_sub_c.csv" |>
 			Departure_Date = col_character()
 		)
 	) |>
+  mutate(
+    S2 = remove_seconds(S2),
+    Sch_Departure = remove_seconds(Sch_Departure),
+    Act_Departure = remove_seconds(Act_Departure)
+  ) |>
 	mutate(
 		dep_hour = Act_Departure |>
 			hour() |>
@@ -59,7 +72,6 @@ Pc = "datasets/dat_P_sub_c.csv" |>
 		Departure_Time = dep_hour |>
 			paste(
 				dep_min,
-				"00",
 				sep = ":"
 			),
 		.keep = "unused",
@@ -74,7 +86,6 @@ data = data |>
 	) |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
-		Day_of_Week = parse_number(Day_of_Week),
 		Month = parse_number(Month),
 		Season = parse_number(Season)
 	) |>
@@ -86,6 +97,15 @@ data = data |>
 		),
 		.after = Day_of_Week
 	) |>
+  mutate(
+    BFO_Dest_City = BFO_Dest_City |>
+      str_detect(pattern = regex("[0-9]$")) |>
+      if_else(
+        true = BFO_Dest_City,
+        false = BFO_Dest_City |>
+          str_remove(pattern = regex("^BOR"))
+      )
+  ) |>
 	type_convert(
 		col_types = cols(
 			Airfield = col_factor(),
@@ -116,11 +136,12 @@ for (
 		) |>
 		as_datetime()
 }
-data = data |> # remove nonsensical S2 >= Act_Departure
+data = data |> # remove nonsensical S2 >= Act_Departure as well as S2 = NA etc.
 	filter(
-		is.na(S2) | S2 <= Act_Departure,
+		S2 <= Act_Departure,
 		Airfield %in% c("AUC", "SAF"),
-		!is.na(C0) & C0 != 0
+		!is.na(C0) & C0 != 0,
+		!is.na(BFO_Dest_City) & BFO_Dest_City != "."
 	)
 
 data |>
