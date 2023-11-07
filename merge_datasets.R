@@ -19,8 +19,6 @@ common_parse = function(x) {
 		)
 }
 
-remove_seconds = function(x) str_remove(string = x, pattern = ":00$")
-
 # place leading zeroes on hours and minutes
 # if they are of length one
 leadzero = function(x) {
@@ -39,13 +37,7 @@ data = "datasets/years20262030.csv" |>
 	bind_rows(
 		"datasets/BASA_AUC_2028_912.csv" |>
 			common_parse()
-	) |>
-  mutate(
-    S2 = remove_seconds(S2),
-    Sch_Departure = remove_seconds(Sch_Departure),
-    Act_Departure = remove_seconds(Act_Departure),
-    Departure_Time = remove_seconds(Departure_Time)
-  )
+	)
 Pc = "datasets/dat_P_sub_c.csv" |>
 	read_csv(
 		col_types = cols(
@@ -55,11 +47,6 @@ Pc = "datasets/dat_P_sub_c.csv" |>
 			Departure_Date = col_character()
 		)
 	) |>
-  mutate(
-    S2 = remove_seconds(S2),
-    Sch_Departure = remove_seconds(Sch_Departure),
-    Act_Departure = remove_seconds(Act_Departure)
-  ) |>
 	mutate(
 		dep_hour = Act_Departure |>
 			hour() |>
@@ -72,6 +59,7 @@ Pc = "datasets/dat_P_sub_c.csv" |>
 		Departure_Time = dep_hour |>
 			paste(
 				dep_min,
+				"00",
 				sep = ":"
 			),
 		.keep = "unused",
@@ -152,3 +140,7 @@ data |>
 		quote = "needed",
 		escape = "backslash"
 	)
+zip(
+  zipfile = "./passenger_data.zip",
+  files = "./passenger_data.csv"
+)
