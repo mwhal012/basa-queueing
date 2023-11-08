@@ -45,7 +45,6 @@ data = data |>
     Year == "2028" # otherwise only 4 obs for 2030
   ) |>
   filter(S2 > ymd_hms("2028-08-31 00:00:00")) |>
-  select(!c(Airfield, Year, WT_flag:Sch_Act_Flag, ...30)) |>
   mutate(
     BFO_Dest_City_or_CC = if_else(
       BFO_Destination_Country_Code == "BOR",
@@ -73,4 +72,6 @@ data = data |>
   ) |>
   mutate(cluster = as_factor(cluster))
 summary(data)
+# number of hours: 732 apiece
 summary(data$cluster)
+summary(data$cluster)/732
