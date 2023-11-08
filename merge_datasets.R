@@ -79,7 +79,7 @@ data = data |>
 	) |>
 	mutate(
 		Period_of_Week = if_else(
-			Day_of_Week <= 5, # Monday is 1, Tuesday is 2 etc.
+			Day_of_Week < 6, # Monday is 1, Tuesday is 2 etc.
 			true = "1 - WEEKDAY",
 			false = "2 - WEEKEND"
 		),
