@@ -4,10 +4,10 @@ library(conflicted)
 "dplyr" |>
 	conflict_prefer_all(quiet = TRUE)
 
-data = "./passenger_data.csv.gz" |>
+unzip("./passenger_data.zip")
+data = "./passenger_data.csv" |>
 	read_csv(
 		col_types = cols(
-			...1 = col_integer(),
 			X = col_integer(),
 			Airfield = col_factor(),
 			S2 = col_datetime(),
@@ -23,21 +23,54 @@ data = "./passenger_data.csv.gz" |>
 			Pass_ID = col_integer(),
 			Departure_Date = col_date(),
 			Departure_Time = col_time(),
-			Time_of_Day = col_integer(),
+			Time_of_Day = col_factor(),
 			Period_of_Week = col_factor(),
-			Day_of_Week = col_integer(),
-			Month = col_integer(),
-			Season = col_integer(),
-			Year = col_integer(),
+			Day_of_Week = col_factor(),
+			Month = col_factor(),
+			Season = col_factor(),
+			Year = col_factor(),
 			Flight_ID = col_integer(),
 			Delay_in_Seconds = col_integer(),
 			.default = col_guess()
 		)
-	) |>
-	filter(!is.na(C_Start)) |>
-	mutate(
-		C_average = (C_Start + C0)/2,
-		.after = C0
-	) |>
-	filter(C_average != C_avg)
+	)
+
+# ~1500 observations from Airfield SAF make it unsuitable for clustering
+# similarly the destinations below have too few observations
+data = data |>
+  filter(
+    Airfield == "AUC",
+    BFO_Destination_Country_Code != "WIC",
+    BFO_Dest_City != "BOR008",
+    Year == "2028" # otherwise only 4 obs for 2030
+  ) |>
+  filter(S2 > ymd_hms("2028-08-31 00:00:00")) |>
+  select(!c(Airfield, Year, WT_flag:Sch_Act_Flag, ...30)) |>
+  mutate(
+    BFO_Dest_City_or_CC = if_else(
+      BFO_Destination_Country_Code == "BOR",
+      true = paste(
+        "City",
+        BFO_Dest_City,
+        sep = "-"
+      ),
+      false = paste(
+        "Country",
+        BFO_Destination_Country_Code,
+        sep = "-"
+      )
+    ) |>
+      as_factor(),
+    .after = BFO_Destination_Country_Code
+  ) |>
+  unite(
+    col = cluster,
+    Time_of_Day,
+    BFO_Dest_City_or_CC,
+    sep = "_",
+    remove = FALSE,
+    na.rm = FALSE
+  ) |>
+  mutate(cluster = as_factor(cluster))
 summary(data)
+summary(data$cluster)
