@@ -31,14 +31,7 @@ leadzero = function(x) {
 	)
 }
 
-# throws warnings about NA in datetime fields
-data = "datasets/years20262030.csv" |>
-	common_parse() |>
-	bind_rows(
-		"datasets/BASA_AUC_2028_912.csv" |>
-			common_parse()
-	)
-Pc = "datasets/dat_P_sub_c.csv" |>
+data = "datasets/dat_P_sub_c.csv" |>
 	read_csv(
 		col_types = cols(
 			S2 = col_character(),
@@ -66,16 +59,23 @@ Pc = "datasets/dat_P_sub_c.csv" |>
 		.after = Departure_Date
 	)
 data = data |>
-	bind_rows(Pc)
-rm(Pc)
+	bind_rows(
+	  "datasets/BASA_AUC_2028_912.csv" |>
+	    common_parse(),
+	  "datasets/years20262030.csv" |>
+	    common_parse(),
+	  .id = "original_frame"
+	)
 data = data |>
-	select(
-		!c(Period_of_Week, valid_P_ID:Sch_Act_Flag)
-	) |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
 		Month = parse_number(Month),
-		Season = parse_number(Season)
+		Season = parse_number(Season),
+		original_frame = case_when(
+		  original_frame == 1 ~ "dat_P_sub_c",
+		  original_frame == 2 ~ "BASA_AUC_2028_912",
+		  original_frame == 3 ~ "years20262030"
+		)
 	) |>
 	mutate(
 		Period_of_Week = if_else(
@@ -144,3 +144,4 @@ zip(
   zipfile = "./passenger_data.zip",
   files = "./passenger_data.csv"
 )
+file.remove("./passenger_data.csv")
