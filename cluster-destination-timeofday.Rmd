@@ -1,10 +1,29 @@
+---
+title: "cluster-destination-timeofday"
+output:
+  pdf_document
+---
+
+```{r 'setup', include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r 'imports'}
+library(conflicted)
 library(tidyverse)
 library(rlang)
-library(conflicted)
-"dplyr" |>
-	conflict_prefer_all(quiet = TRUE)
+library(gt)
+  library(gtExtras)
+conflicts_prefer(
+  dplyr::filter
+)
+```
 
+```{r 'unzip-data'}
 unzip("./passenger_data.zip")
+```
+
+```{r 'get-data'}
 data = "./passenger_data.csv" |>
 	read_csv(
 		col_types = cols(
@@ -34,9 +53,11 @@ data = "./passenger_data.csv" |>
 			.default = col_guess()
 		)
 	)
+```
 
+```{r 'data-edits'}
 # ~1500 observations from Airfield SAF make it unsuitable for clustering
-# similarly the destinations below have too few observations
+# the destinations below have too few observations
 data = data |>
   filter(
     Airfield == "AUC",
@@ -71,7 +92,25 @@ data = data |>
     na.rm = FALSE
   ) |>
   mutate(cluster = as_factor(cluster))
+```
+
+```{r 'data-display'}
 summary(data)
-# number of hours: 732 apiece
-summary(data$cluster)
-summary(data$cluster)/732
+cl = data |>
+  group_by(cluster) |>
+  summarise(n = n())
+cl |>
+  mutate(
+    count = n,
+    rate = n/732, # number of hours: 732 apiece
+    .keep = "unused",
+    .after = cluster
+  ) |>
+  arrange(cluster) |>
+  gt() |>
+  tab_header(
+    title = "Passenger arrival rates at **AUC**" |>
+      md(),
+    subtitle = "clustered by destination and time of day"
+  )
+```
