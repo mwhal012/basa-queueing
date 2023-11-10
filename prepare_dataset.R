@@ -19,7 +19,7 @@ leadzero = function(x) {
 
 leadzero_datetime = function(x) {
   if_else(
-    str_detect(x, " ...."), # only one hour digit
+    str_detect(x, " ....$"), # only one hour digit
       true = str_split(x, " ") |>
         stri_join_list(sep = " 0"),
       false = x
