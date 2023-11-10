@@ -1,23 +1,9 @@
 library(tidyverse)
 library(rlang)
+library(stringi)
 library(conflicted)
 "dplyr" |>
 	conflict_prefer_all(quiet = TRUE)
-
-# cast columns to common types
-# for the purpose of merging compatible dataframes
-common_parse = function(x) {
-	x |>
-		read_csv(
-			col_types = cols(
-				S2 = col_character(),
-				Sch_Departure = col_character(),
-				Act_Departure = col_character(),
-				Departure_Date = col_character(),
-				Departure_Time = col_character()
-			)
-		)
-}
 
 # place leading zeroes on hours and minutes
 # if they are of length one
@@ -31,6 +17,15 @@ leadzero = function(x) {
 	)
 }
 
+leadzero_datetime = function(x) {
+  if_else(
+    str_detect(x, " ...."), # only one hour digit
+      true = str_split(x, " ") |>
+        stri_join_list(sep = " 0"),
+      false = x
+  )
+}
+
 data = "datasets/dat_P_sub_c.csv" |>
 	read_csv(
 		col_types = cols(
@@ -39,7 +34,19 @@ data = "datasets/dat_P_sub_c.csv" |>
 			Act_Departure = col_character(),
 			Departure_Date = col_character()
 		)
-	) |>
+	)|>
+  mutate(
+    S2 = leadzero_datetime(S2),
+    Sch_Departure = leadzero_datetime(Sch_Departure),
+    Act_Departure = leadzero_datetime(Act_Departure)
+  ) |>
+  type_convert( # needed to parse Act_Departure in next step
+    col_types = cols(
+      S2 = col_datetime(),
+      Sch_Departure = col_datetime(),
+      Act_Departure = col_datetime()
+    )
+  ) |>
 	mutate(
 		dep_hour = Act_Departure |>
 			hour() |>
@@ -59,23 +66,10 @@ data = "datasets/dat_P_sub_c.csv" |>
 		.after = Departure_Date
 	)
 data = data |>
-	bind_rows(
-	  "datasets/BASA_AUC_2028_912.csv" |>
-	    common_parse(),
-	  "datasets/years20262030.csv" |>
-	    common_parse(),
-	  .id = "original_frame"
-	)
-data = data |>
 	mutate(
 		Time_of_Day = parse_number(Time_of_Day),
 		Month = parse_number(Month),
-		Season = parse_number(Season),
-		original_frame = case_when(
-		  original_frame == 1 ~ "dat_P_sub_c",
-		  original_frame == 2 ~ "BASA_AUC_2028_912",
-		  original_frame == 3 ~ "years20262030"
-		)
+		Season = parse_number(Season)
 	) |>
 	mutate(
 		Period_of_Week = if_else(
@@ -97,10 +91,7 @@ data = data |>
 	type_convert(
 		col_types = cols(
 			Airfield = col_factor(),
-			S2 = col_datetime(),
 			C_avg = col_double(),
-			Sch_Departure = col_datetime(),
-			Act_Departure = col_datetime(),
 			BFO_Dest_City = col_factor(),
 			BFO_Destination_Country_Code = col_factor(),
 			Departure_Date = col_date(format = "%Y-%m-%d"),
@@ -108,26 +99,11 @@ data = data |>
 		),
 		guess_integer = TRUE
 	) |>
-	relocate(X, .before = "Airfield")
-# Fill in missing Act_Departure values
-# using Departure_Date and Departure_Time
-for (
-	row_index in data |>
-		select(Act_Departure) |>
-		is.na() |>
-		which()
-) {
-	data$Act_Departure[row_index] = data$Departure_Date[[row_index]] |>
-		paste(
-			data$Departure_Time[[row_index]],
-			sep = " "
-		) |>
-		as_datetime()
-}
+  select(!c(valid_P_ID, WT_flag:Sch_Act_Flag))
+
 data = data |> # remove nonsensical S2 >= Act_Departure as well as S2 = NA etc.
 	filter(
 		S2 <= Act_Departure,
-		Airfield %in% c("AUC", "SAF"),
 		!is.na(C0) & C0 != 0,
 		!is.na(BFO_Dest_City) & BFO_Dest_City != "."
 	)
