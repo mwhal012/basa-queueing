@@ -34,25 +34,16 @@ table3 <- data %>%
     LessThan25 = mean(Wait_Time < 25, na.rm = TRUE) * 100
   )
 
-
-table4 <- data %>%
-  left_join(table1, by = c("Time_of_Day", "Day_of_Week")) %>%
-  left_join(table3, by = c("Time_of_Day", "Day_of_Week")) %>%
-  mutate(
-    Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Arrival_Rate),
-    Est_Phi = Wait_Avg * (Est_Serv - Arrival_Rate)
-  )
-
 table4 <- data %>%
   group_by(Day_of_Week, Time_of_Day) %>%
   summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
             Wait_Avg = mean(Wait_Time, na.rm = TRUE),
-            Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Arrival_Rate),
+            Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Wait_Avg),
             Est_Phi = Wait_Avg * (Est_Serv - Arrival_Rate),
-            EstLessThan5 = (1 - (Wait_Avg/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*5))*100,
-            EstLessThan10 = (1 - (Wait_Avg/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*10))*100,
-            EstLessThan15 = (1 - (Wait_Avg/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*15))*100,
-            EstLessThan20 = (1 - (Wait_Avg/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*20))*100,
-            EstLessThan25 = (1 - (Wait_Avg/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*25))*100
+            EstLessThan5 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*5))*100,
+            EstLessThan10 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*10))*100,
+            EstLessThan15 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*15))*100,
+            EstLessThan20 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*20))*100,
+            EstLessThan25 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*25))*100
   )
 
