@@ -104,7 +104,7 @@ data = data |>
 data = data |> # remove nonsensical S2 >= Act_Departure as well as S2 = NA etc.
 	filter(
 		S2 <= Act_Departure,
-		!is.na(C0) & C0 != 0,
+		!is.na(C0),
 		!is.na(BFO_Dest_City) & BFO_Dest_City != "."
 	)
 
