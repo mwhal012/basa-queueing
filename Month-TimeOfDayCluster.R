@@ -4,7 +4,7 @@ passenger_data <- read.csv("R Files/Data/passenger_data.csv")
 data = passenger_data
 
 table1 <- data %>%
-  group_by(Month, Day_of_Week, Time_of_Day) %>%
+  group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
     Num_Pass = n(),
     Unique_Dates = n_distinct(Departure_Date)
@@ -25,7 +25,7 @@ table2 <- data %>%
   mutate(C0_Distribution = sprintf("%.2f%%", C0_Distribution))
 
 table3 <- data %>%
-  group_by(Month, Day_of_Week, Time_of_Day) %>%
+  group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
     Wait_Avg = mean(Wait_Time, na.rm = TRUE),
     LessThan5 = mean(Wait_Time < 5, na.rm = TRUE) * 100,
@@ -37,7 +37,7 @@ table3 <- data %>%
   )
 
 table4 <- data %>%
-  group_by(Month, Day_of_Week, Time_of_Day) %>%
+  group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
             Wait_Avg = mean(Wait_Time, na.rm = TRUE),
             Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Wait_Avg),
@@ -51,7 +51,7 @@ table4 <- data %>%
   )
 
 table5 <- data %>%
-  group_by(Month, Time_of_Day) %>%
+  group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
             Wait_Avg = mean(Wait_Time, na.rm = TRUE),
             Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Wait_Avg),
@@ -63,13 +63,3 @@ table5 <- data %>%
 table5 <- table5[-c(22), ]
 
 mean((table5$Arr_Rate_per_server - table5$Est_Serv_per_server)^2)
-
-table5 <- data %>%
-  group_by(Day_of_Week,  Time_of_Day) %>%
-  summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
-            Wait_Avg = mean(Wait_Time, na.rm = TRUE),
-            Est_Serv = ((Wait_Avg * Arrival_Rate) + sqrt((Wait_Avg * Arrival_Rate)^2 + 4 * (Wait_Avg * Arrival_Rate))) / (2 * Wait_Avg),
-            Avg_C0 = mean(C0),
-            Arr_Rate_per_server = (Arrival_Rate/Avg_C0),
-            Est_Serv_per_server = (Est_Serv/Avg_C0)
-  )
