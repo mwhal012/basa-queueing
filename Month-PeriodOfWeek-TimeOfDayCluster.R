@@ -3,7 +3,7 @@ library(dplyr)
 passenger_data <- read.csv("R Files/Data/passenger_data.csv")
 data = passenger_data
 
-table1 <- data %>%
+table18 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
     Num_Pass = n(),
@@ -15,7 +15,7 @@ table1 <- data %>%
   )
 
 
-table2 <- data %>%
+table20 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
     Avg_C0 = mean(C0),
@@ -24,7 +24,7 @@ table2 <- data %>%
   ) %>%
   mutate(C0_Distribution = sprintf("%.2f%%", C0_Distribution))
 
-table3 <- data %>%
+table23 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
     Wait_Avg = mean(Wait_Time, na.rm = TRUE),
@@ -36,7 +36,7 @@ table3 <- data %>%
     LessThan30 = mean(Wait_Time < 30, na.rm = TRUE) * 100
   )
 
-table4 <- data %>%
+table25 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
             Wait_Avg = mean(Wait_Time, na.rm = TRUE),
@@ -50,7 +50,7 @@ table4 <- data %>%
             EstLessThan30 = (1 - (Arrival_Rate/Est_Serv)*exp(-(Est_Serv-Arrival_Rate)*30))*100
   )
 
-table5 <- data %>%
+table29 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
             Wait_Avg = mean(Wait_Time, na.rm = TRUE),
@@ -60,10 +60,10 @@ table5 <- data %>%
             Est_Serv_per_server = (Est_Serv/Avg_C0)
   )
 
-table5 <- table5[-c(22), ]
+table29 <- table29[-c(22), ]
 
-mean((table5$Arr_Rate_per_server - table5$Est_Serv_per_server)^2)
+mean((table29$Arr_Rate_per_server - table29$Est_Serv_per_server)^2)
 
-model = lm(formula = Est_Serv_per_server ~ Arr_Rate_per_server, data = table5)
-plot(table5$Arr_Rate_per_server,table5$Est_Serv_per_server)
+model = lm(formula = Est_Serv_per_server ~ Arr_Rate_per_server, data = table29)
+plot(table29$Arr_Rate_per_server,table29$Est_Serv_per_server)
 summary(model)
