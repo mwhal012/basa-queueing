@@ -60,7 +60,7 @@ table25 <- data %>%
   select(!c(Arrival_Rate:term)) |>
   filter(!is.na(Est_Serv))
 
-tab_29 = data |>
+table29 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
     Avg_C0 = mean(C0),
@@ -74,9 +74,9 @@ tab_29 = data |>
   select(!c(term, Wait_Avg)) |>
   filter(!is.na(Est_Serv))
 
-plot(tab_29$Arr_Rate_per_server, tab_29$Est_Serv_per_server)
+plot(table29$Arr_Rate_per_server, table29$Est_Serv_per_server)
 
-mod = tab_29 |>
+mod = table29 |>
   lm(formula = Est_Serv ~ 0 + Avg_C0 + Arrival_Rate)
 summary(mod)
 
@@ -87,7 +87,7 @@ est_perf = function(c, lambda, mins = 5) {
   return(1 - (lambda/mu_R)*exp((lambda - mu_R)*mins))
 }
 
-tab_32 = data |>
+table32 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
     Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
@@ -111,7 +111,7 @@ pred_serv = function(p = 1, lambda, mins = 5) {
   return((lamW::lambertW0(arg) - coef[2]*term)/(coef[1]*mins))
 }
 
-tab_34 = data |>
+table34 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
     Count = n(),
