@@ -28,9 +28,15 @@ table20 <- data %>%
   ) %>%
   mutate(C0_Distribution = sprintf("%.2f%%", C0_Distribution)) # needs a reframe
 
-table23 <- data %>%
+# 23a is used in a later calculation.
+# It shouldn't be put in the presentation.
+table23a <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
+    avgCstart = mean(C_Start),
+    avgCavg = mean(C_avg),
+    Avg_C0 = mean(C0),
+    Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
     Count = n(),
     Wait_Avg = mean(Wait_Time, na.rm = TRUE),
     LessThan5 = mean(Wait_Time < 5, na.rm = TRUE) * 100,
@@ -41,6 +47,8 @@ table23 <- data %>%
     LessThan30 = mean(Wait_Time < 30, na.rm = TRUE) * 100
   ) |>
   filter(!is.na(Wait_Avg))
+table23 = table23a |>
+  select(!c(avgCavg, Avg_C0, Arrival_Rate))
 
 table25 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
@@ -63,6 +71,8 @@ table25 <- data %>%
 table29 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
+    avgCstart = mean(C_Start),
+    avgCavg = mean(C_avg),
     Avg_C0 = mean(C0),
     Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
     Wait_Avg = mean(Wait_Time, na.rm = TRUE),
@@ -111,23 +121,15 @@ pred_serv = function(p = 1, lambda, mins = 5) {
   return((lamW::lambertW0(arg) - coef[2]*term)/(coef[1]*mins))
 }
 
-table34 = data |>
-  group_by(Month, Period_of_Week, Time_of_Day) |>
-  summarise(
-    Count = n(),
-    Avg_C0 = mean(C0),
-    Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
-    Wait_Avg = mean(Wait_Time, na.rm = TRUE),
-    term = Wait_Avg *Arrival_Rate,
-    Est_Serv = (term + sqrt(term^2 + 4 * term)) / (2 * Wait_Avg),
-    perf_lt5 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 5) * 100,
-    perf_lt10 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 10) * 100,
-    perf_lt15 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 15) * 100,
-    perf_lt20 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 20) * 100,
-    perf_lt25 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 25) * 100,
-    perf_lt30 = est_perf(c = Est_Serv, lambda = Arrival_Rate, mins = 30) * 100,
-    c_pred_lt5 = pred_serv(p = perf_lt5/100, lambda = Arrival_Rate, mins = 5),
-    c_pred_lt10 = pred_serv(p = perf_lt10/100, lambda = Arrival_Rate, mins = 10)
+table34 = table23a |>
+  mutate(
+    pred_serv = pred_serv(p = 0.85, lambda = Arrival_Rate, mins = 10)
   ) |>
-  select(!term) |>
-  filter(!is.na(Wait_Avg))
+  filter(Time_of_Day > 1)
+
+ggplot(data = table34) + geom_point(
+  mapping = aes(
+    x = Avg_C0,
+    y = pred_serv
+  )
+)
