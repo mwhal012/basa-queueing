@@ -33,6 +33,8 @@ table20 <- data %>%
 table23a <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
   summarise(
+    avgCstart = mean(C_Start),
+    avgCavg = mean(C_avg),
     Avg_C0 = mean(C0),
     Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
     Count = n(),
@@ -46,7 +48,7 @@ table23a <- data %>%
   ) |>
   filter(!is.na(Wait_Avg))
 table23 = table23a |>
-  select(!c(Avg_C0, Arrival_Rate))
+  select(!c(avgCavg, Avg_C0, Arrival_Rate))
 
 table25 <- data %>%
   group_by(Month, Period_of_Week, Time_of_Day) %>%
@@ -69,6 +71,8 @@ table25 <- data %>%
 table29 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
+    avgCstart = mean(C_Start),
+    avgCavg = mean(C_avg),
     Avg_C0 = mean(C0),
     Arrival_Rate = n() / (360 * n_distinct(Departure_Date)),
     Wait_Avg = mean(Wait_Time, na.rm = TRUE),
@@ -119,9 +123,9 @@ pred_serv = function(p = 1, lambda, mins = 5) {
 
 table34 = table23a |>
   mutate(
-    pred_serv = pred_serv(p = (LessThan20-0.05)/100, lambda = Arrival_Rate, mins = 20)
+    pred_serv = pred_serv(p = 0.85, lambda = Arrival_Rate, mins = 10)
   ) |>
-  filter(LessThan15 < 100)
+  filter(Time_of_Day > 1)
 
 ggplot(data = table34) + geom_point(
   mapping = aes(
