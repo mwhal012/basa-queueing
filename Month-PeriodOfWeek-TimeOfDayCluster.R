@@ -84,7 +84,39 @@ table29 = data |>
   select(!c(term, Wait_Avg)) |>
   filter(!is.na(Est_Serv))
 
-plot(table29$Arr_Rate_per_server, table29$Est_Serv_per_server)
+line = table29 |>
+  lm(formula = Est_Serv_per_server ~ Arr_Rate_per_server) |>
+  coef()
+
+ggplot(
+  data = table29,
+  mapping = aes(
+    x = Arr_Rate_per_server,
+    y = Est_Serv_per_server
+  )
+) +
+geom_point(
+  colour = "deepskyblue4",
+  alpha = 0.5,
+  size = 4
+) +
+geom_abline(
+  slope = line[[2]],
+  intercept = line[[1]],
+  colour = "deepskyblue2",
+  alpha = 0.3,
+  linewidth = 2
+) +
+theme_minimal() +
+theme(
+  plot.title = element_text(hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  axis.ticks = element_blank(),
+  panel.grid = element_blank(),
+  validate = TRUE
+) +
+xlab("Arrival rate per server") +
+ylab("Service rate per server")
 
 mod = table29 |>
   lm(formula = Est_Serv ~ 0 + Avg_C0 + Arrival_Rate)
@@ -132,6 +164,14 @@ ggplot(data = table34) + geom_point(
     x = Avg_C0,
     y = pred_serv
   )
+) +
+theme_minimal() +
+theme(
+  plot.title = element_text(hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  axis.ticks = element_blank(),
+  panel.grid = element_blank(),
+  validate = TRUE
 )
 
 SeptemberData = data |>
