@@ -71,6 +71,7 @@ table25 <- data %>%
 table29 = data |>
   group_by(Month, Period_of_Week, Time_of_Day) |>
   summarise(
+    count = n(),
     avgCstart = mean(C_Start),
     avgCavg = mean(C_avg),
     Avg_C0 = mean(C0),
@@ -92,20 +93,30 @@ ggplot(
   data = table29,
   mapping = aes(
     x = Arr_Rate_per_server,
-    y = Est_Serv_per_server
+    y = Est_Serv_per_server,
+    size = count,
+    colour = factor(Time_of_Day)
   )
 ) +
 geom_point(
-  colour = "deepskyblue4",
-  alpha = 0.5,
-  size = 4
+  alpha = 0.6
+) +
+scale_colour_viridis_d(
+  option = "D",
+  end = 0.9,
+  direction = -1,
+  labels = c(
+    "0:00 - 6:00",
+    "6:00 - 12:00",
+    "12:00 - 18:00",
+    "18:00 - 0:00"
+  )
 ) +
 geom_abline(
   slope = line[[2]],
   intercept = line[[1]],
-  colour = "deepskyblue2",
-  alpha = 0.3,
-  linewidth = 2
+  alpha = 0.7,
+  linewidth = 1
 ) +
 theme_minimal() +
 theme(
@@ -115,8 +126,14 @@ theme(
   panel.grid = element_blank(),
   validate = TRUE
 ) +
-xlab("Arrival rate per server") +
-ylab("Service rate per server")
+labs(
+  title = "Arrival and service rates per server",
+  subtitle = "justification for linear regression",
+  colour = "Time of Day",
+  size = "Passengers"
+) +
+xlab("Arrival rate per server (lambda/c)") +
+ylab("Service rate per server (mu/c)")
 
 mod = table29 |>
   lm(formula = Est_Serv ~ 0 + Avg_C0 + Arrival_Rate)
@@ -159,10 +176,26 @@ table34 = table23a |>
   ) |>
   filter(Time_of_Day > 1)
 
-ggplot(data = table34) + geom_point(
+ggplot(
+  data = table34,
   mapping = aes(
     x = Avg_C0,
-    y = pred_serv
+    y = pred_serv,
+    size = Count,
+    colour = factor(Time_of_Day)
+  )
+) +
+geom_point(
+  alpha = 0.7
+) +
+scale_colour_viridis_d(
+  option = "D",
+  end = 0.675,
+  direction = -1,
+  labels = c(
+    "6:00 - 12:00",
+    "12:00 - 18:00",
+    "18:00 - 0:00"
   )
 ) +
 theme_minimal() +
@@ -172,7 +205,55 @@ theme(
   axis.ticks = element_blank(),
   panel.grid = element_blank(),
   validate = TRUE
-)
+) +
+labs(
+  title = "Est. Servers Required",
+  subtitle = "for 85% served within 10 minutes",
+  colour = "Time of Day",
+  size = "Passengers"
+) +
+xlab("Number of servers c") +
+ylab("Number of servers required")
+
+ggplot(
+  data = table34,
+  mapping = aes(
+    x = Avg_C0,
+    y = pred_serv,
+    size = Count,
+    colour = factor(Month)
+  )
+) +
+geom_point(
+  alpha = 0.7
+) +
+scale_colour_viridis_d(
+  option = "B",
+  end = 0.85,
+  direction = -1,
+  labels = c(
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  )
+) +
+theme_minimal() +
+theme(
+  plot.title = element_text(hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  axis.ticks = element_blank(),
+  panel.grid = element_blank(),
+  validate = TRUE
+) +
+labs(
+  title = "Est. Servers Required",
+  subtitle = "for 85% served within 10 minutes",
+  colour = "Month",
+  size = "Passengers"
+) +
+xlab("Number of servers c") +
+ylab("Number of servers required")
 
 SeptemberData = data |>
   filter(!is.na(Wait_Time)) |>
@@ -205,12 +286,12 @@ scale_y_discrete(
 ) +
 scale_colour_viridis_d(
   option = "D",
-  end = 0.95,
+  end = 0.675,
   direction = -1
 ) +
 scale_fill_viridis_d(
   option = "D",
-  end = 0.95,
+  end = 0.675,
   direction = -1
 ) +
 coord_cartesian(
@@ -226,7 +307,7 @@ theme(
 ) +
 labs(
   title = "Queue Wait Time by Time of Day",
-  subtitle = "September Weekday",
-  caption = "with 85th percentile"
+  subtitle = "for September weekdays",
+  caption = "vertical line is 85th percentile"
 ) +
 xlab("wait (mins)")
