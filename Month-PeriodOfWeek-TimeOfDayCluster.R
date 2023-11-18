@@ -133,3 +133,60 @@ ggplot(data = table34) + geom_point(
     y = pred_serv
   )
 )
+
+SeptemberData = data |>
+  filter(!is.na(Wait_Time)) |>
+  filter(Month == 9 & Period_of_Week == "1 - WEEKDAY" & Time_of_Day > 1) |>
+  mutate(Time_of_Day = factor(Time_of_Day))
+
+ggplot(
+  data = SeptemberData,
+  mapping = aes(
+    y = Time_of_Day,
+    x = Wait_Time,
+    group = factor(Time_of_Day),
+    colour = factor(Time_of_Day),
+    fill = factor(Time_of_Day)
+  )
+) +
+geom_violin(
+  alpha = 0.4,
+  scale = "count",
+  width = 1.3,
+  adjust = 1.8,
+  linewidth = 0.8,
+  draw_quantiles = .85,
+  show.legend = FALSE
+) +
+scale_y_discrete(
+  limits = c("4", "3", "2"),
+  labels = c("18:00 - 0:00", "12:00 - 18:00", "6:00 - 12:00"),
+  name = NULL
+) +
+scale_colour_viridis_d(
+  option = "D",
+  end = 0.95,
+  direction = -1
+) +
+scale_fill_viridis_d(
+  option = "D",
+  end = 0.95,
+  direction = -1
+) +
+coord_cartesian(
+  xlim = c(0, 20)
+) +
+theme_minimal() +
+theme(
+  plot.title = element_text(hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  axis.ticks = element_blank(),
+  panel.grid = element_blank(),
+  validate = TRUE
+) +
+labs(
+  title = "Queue Wait Time by Time of Day",
+  subtitle = "September Weekday",
+  caption = "with 85th percentile"
+) +
+xlab("wait (mins)")
